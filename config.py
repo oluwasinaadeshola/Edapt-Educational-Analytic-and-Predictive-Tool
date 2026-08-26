@@ -1,3 +1,6 @@
+import os
+DATA_FILE_PATH = os.getenv("DATA_FILE_PATH", "Capstone_data_20260324.csv")
+
 """Application configuration and shared constants."""
 
 from pathlib import Path
