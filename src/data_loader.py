@@ -1,5 +1,5 @@
 """
-Data ingestion layer.
+Data ingestion layer with Streamlit Cloud file upload support.
 
 LOCAL MODE (current):
     Reads the anonymised CSV export from the institutional data warehouse.
@@ -30,6 +30,7 @@ FUTURE LMS INTEGRATION — replace `load_assessment_data()` with one of:
 from pathlib import Path
 
 import pandas as pd
+import streamlit as st
 
 from config import DEFAULT_DATA_PATH
 
@@ -37,32 +38,104 @@ from config import DEFAULT_DATA_PATH
 def load_assessment_data(source: Path | str | None = None) -> pd.DataFrame:
     """
     Load raw transactional assessment rows.
-
-    Parameters
-    ----------
-    source : path to CSV file, or None to use the default local export.
-
+    
+    Tries multiple locations:
+    1. Uploaded file (via Streamlit file uploader)
+    2. User-provided path
+    3. Default path from config
+    4. Streamlit Cloud mounted path
+    5. Current directory
+    
     Returns
     -------
     pd.DataFrame with one row per assessment attempt.
     """
-    path = Path(source) if source is not None else DEFAULT_DATA_PATH
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Dataset not found at {path}. "
-            "Place Capstone_data_20260324.csv in the project root, "
-            "or point `source` to your LMS export."
-        )
-
-    df = pd.read_csv(path)
-
-    # Normalise column names to uppercase for consistency with LMS field mapping
-    df.columns = [c.upper() for c in df.columns]
-
-    # STUDYPERIOD stored as float (e.g. 23.2) — keep numeric for ordering
-    df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
-
-    return df
+    
+    # ============================================================
+    # PRIORITY 1: Check for uploaded file in session state
+    # ============================================================
+    if "uploaded_data_path" in st.session_state:
+        uploaded_path = Path(st.session_state["uploaded_data_path"])
+        if uploaded_path.exists():
+            print(f"✅ Using uploaded file: {uploaded_path}")
+            try:
+                df = pd.read_csv(uploaded_path)
+                # Normalise column names
+                df.columns = [c.upper() for c in df.columns]
+                df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
+                return df
+            except Exception as e:
+                print(f"⚠️ Error reading uploaded file: {e}")
+                # Continue to try other paths
+    
+    # ============================================================
+    # PRIORITY 2: User-provided path
+    # ============================================================
+    if source is not None:
+        path = Path(source)
+        if path.exists():
+            print(f"✅ Using user-provided path: {path}")
+            df = pd.read_csv(path)
+            df.columns = [c.upper() for c in df.columns]
+            df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
+            return df
+    
+    # ============================================================
+    # PRIORITY 3: Default path from config
+    # ============================================================
+    if DEFAULT_DATA_PATH and DEFAULT_DATA_PATH.exists():
+        print(f"✅ Using default path: {DEFAULT_DATA_PATH}")
+        df = pd.read_csv(DEFAULT_DATA_PATH)
+        df.columns = [c.upper() for c in df.columns]
+        df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
+        return df
+    
+    # ============================================================
+    # PRIORITY 4: Streamlit Cloud mounted path
+    # ============================================================
+    cloud_paths = [
+        Path("/mount/src/edapt-educational-analytic-and-predictive-tool/Capstone_data_20260324.csv"),
+        Path("/mount/src/edapt-educational-analytic-and-predictive-tool/Capstone_data_20260324.csv"),
+        Path("/app/Capstone_data_20260324.csv"),
+        Path("./Capstone_data_20260324.csv"),
+    ]
+    
+    for path in cloud_paths:
+        if path.exists():
+            print(f"✅ Found data at Streamlit Cloud path: {path}")
+            df = pd.read_csv(path)
+            df.columns = [c.upper() for c in df.columns]
+            df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
+            return df
+    
+    # ============================================================
+    # PRIORITY 5: Try just the filename
+    # ============================================================
+    simple_path = Path("Capstone_data_20260324.csv")
+    if simple_path.exists():
+        print(f"✅ Found data at: {simple_path}")
+        df = pd.read_csv(simple_path)
+        df.columns = [c.upper() for c in df.columns]
+        df["STUDYPERIOD"] = df["STUDYPERIOD"].astype(float)
+        return df
+    
+    # ============================================================
+    # No file found - raise helpful error
+    # ============================================================
+    raise FileNotFoundError(
+        f"Dataset not found.\n\n"
+        f"📂 **How to upload your data:**\n"
+        f"1. Look at the left sidebar\n"
+        f"2. Find the '📂 Upload Data File' section\n"
+        f"3. Click 'Browse files' and select your CSV\n"
+        f"4. The app will automatically load it!\n\n"
+        f"📋 **Tried these locations:**\n"
+        f"  - Uploaded file: {st.session_state.get('uploaded_data_path', 'Not uploaded')}\n"
+        f"  - Default path: {DEFAULT_DATA_PATH}\n"
+        f"  - Cloud paths: {', '.join(str(p) for p in cloud_paths[:3])}\n"
+        f"  - Current directory: {Path.cwd()}\n\n"
+        f"💡 **Tip:** If you've uploaded the file, try refreshing the page."
+    )
 
 
 def normalise_lms_payload(payload: dict) -> pd.DataFrame:

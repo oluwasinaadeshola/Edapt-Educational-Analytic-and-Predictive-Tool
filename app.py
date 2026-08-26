@@ -9,6 +9,8 @@ Launch:
 from __future__ import annotations
 
 import sys
+import tempfile
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -111,20 +113,70 @@ def _resolve_feature_row(
 
 
 # ---------------------------------------------------------------------------
-# Load & process
+# SIDEBAR - Configuration & File Upload
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.header("Configuration")
-    data_path = st.text_input(
-        "Data file path",
-        value=str(DEFAULT_DATA_PATH),
-        help="Local CSV export. Replace with LMS webhook URL in production (see src/data_loader.py).",
+    st.header("⚙️ Configuration")
+    
+    # ============================================================
+    # 📂 FILE UPLOADER - NEW!
+    # ============================================================
+    st.subheader("📂 Upload Data File")
+    
+    uploaded_file = st.file_uploader(
+        "Upload Capstone_data CSV",
+        type=['csv'],
+        help="Upload your student data CSV file (e.g., Capstone_data_20260324.csv)"
     )
+    
+    if uploaded_file is not None:
+        # Save the file to a temporary location
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            temp_path = tmp_file.name
+        
+        # Store in session state so it persists across reruns
+        st.session_state['uploaded_data_path'] = temp_path
+        st.session_state['uploaded_file_name'] = uploaded_file.name
+        
+        st.success(f"✅ Uploaded: {uploaded_file.name}")
+        st.caption(f"📊 File size: {len(uploaded_file.getvalue()) / 1024:.1f} KB")
+        
+        # Show a quick preview
+        try:
+            df_preview = pd.read_csv(temp_path)
+            st.write("**Data Preview (first 3 rows):**")
+            st.dataframe(df_preview.head(3), use_container_width=True)
+            st.caption(f"📋 Total rows: {len(df_preview):,}")
+        except Exception as e:
+            st.warning(f"Could not preview file: {e}")
+    else:
+        st.info("📤 Upload a CSV file to begin")
+    
+    st.divider()
+    
+    # Data file path input (fallback)
+    data_path = st.text_input(
+        "Data file path (or use upload above)",
+        value=str(DEFAULT_DATA_PATH),
+        help="Local CSV export. Replace with LMS webhook URL in production.",
+    )
+    
+    # Use uploaded file if available, otherwise use the text input
+    if "uploaded_data_path" in st.session_state:
+        data_path = st.session_state['uploaded_data_path']
+        st.success(f"📁 Using uploaded file: {st.session_state.get('uploaded_file_name', '')}")
 
+
+# ---------------------------------------------------------------------------
+# Load & process
+# ---------------------------------------------------------------------------
+# Check if we have uploaded data first
 try:
     raw = load_data(data_path)
 except FileNotFoundError as exc:
     st.error(str(exc))
+    st.info("💡 **Tip:** Upload your CSV file using the file uploader in the sidebar, then refresh the page.")
     st.stop()
 except Exception as exc:
     st.error(f"Could not load data: {exc}")
@@ -150,7 +202,7 @@ if "selected_student" not in st.session_state and all_students:
 
 with st.sidebar:
     st.divider()
-    st.header("Student Selector")
+    st.header("👤 Student Selector")
     if all_students:
         default_idx = (
             all_students.index(st.session_state.selected_student)
@@ -664,14 +716,9 @@ st.markdown(
 )
 
 
-
-
 # =====================================================================
 # SYSTEM AUTOMATED POST-ML PREDICTION EXPORT PANEL (REPAIRED PATCH)
 # =====================================================================
-import streamlit as st
-import pandas as pd
-
 st.markdown("---")
 st.header("📥 Export AI Predictive At-Risk Registry")
 
