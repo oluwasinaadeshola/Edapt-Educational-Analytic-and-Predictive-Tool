@@ -1,23 +1,20 @@
 """
-EdAPT- Educational Analytics and Predictive Tools — Streamlit Application
-Capstone graduation project: predictive analytics + GenAI intervention engine.
-
-Launch:
-    streamlit run app.py
+EdAPT - Educational Analytics and Predictive Tools
+User-Friendly Interface - Designed for Teachers and Academic Staff
 """
 
 from __future__ import annotations
 
 import sys
 import tempfile
-import os
 from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
-# Ensure project root is on the path so `config` and `src` resolve correctly
+# Ensure project root is on the path
 ROOT = Path(__file__).parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -46,41 +43,292 @@ from src.student_profile import (
 )
 
 # ---------------------------------------------------------------------------
-# Page config
+# Page Configuration
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="EdAPT- Educational Analytics and Predictive Tools",
+    page_title="EDAPT - Student Success Predictor",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-st.title("🎓 EdAPT- Educational Analytics and Predictive Tools")
-st.caption(
-    "Capstone project — predictive early warning, ML model comparison, "
-    "and GenAI-powered intervention drafting."
-)
-
+# ---------------------------------------------------------------------------
+# Custom CSS for Modern, Clean Design
+# ---------------------------------------------------------------------------
+st.markdown("""
+<style>
+    /* Main container styling */
+    .main {
+        padding: 0 1rem;
+    }
+    
+    /* Welcome header */
+    .welcome-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem 2rem 1.5rem 2rem;
+        border-radius: 20px;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    .welcome-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .welcome-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0.5rem 0 0 0;
+    }
+    
+    /* Card styling */
+    .card-modern {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+        margin-bottom: 1rem;
+        height: 100%;
+    }
+    .card-modern:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .card-modern h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .card-modern .big-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0.2rem 0;
+    }
+    .card-modern .sub-text {
+        color: #718096;
+        font-size: 0.85rem;
+    }
+    
+    /* Status badges */
+    .badge-high {
+        background: #fed7d7;
+        color: #c53030;
+        padding: 0.25rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .badge-medium {
+        background: #feebc8;
+        color: #c05621;
+        padding: 0.25rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .badge-low {
+        background: #c6f6d5;
+        color: #276749;
+        padding: 0.25rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    
+    /* Upload area */
+    .upload-box {
+        border: 3px dashed #cbd5e0;
+        border-radius: 16px;
+        padding: 2.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #fafafa;
+        cursor: pointer;
+    }
+    .upload-box:hover {
+        border-color: #667eea;
+        background: #f7fafc;
+    }
+    .upload-box .icon {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+    .upload-box .title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2d3748;
+    }
+    .upload-box .sub {
+        color: #718096;
+        font-size: 0.9rem;
+    }
+    
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background: #f7fafc;
+        border-radius: 12px;
+        padding: 4px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        color: #4a5568;
+    }
+    .stTabs [aria-selected="true"] {
+        background: white !important;
+        color: #667eea !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    
+    /* Metric cards in overview */
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.2rem;
+        text-align: center;
+        border: 1px solid #edf2f7;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .metric-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+    }
+    .metric-card .label {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: 0.2rem;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background: #f7fafc;
+    }
+    
+    /* Progress indicators */
+    .progress-success {
+        color: #48bb78;
+        font-weight: 600;
+    }
+    .progress-warning {
+        color: #ed8936;
+        font-weight: 600;
+    }
+    .progress-danger {
+        color: #fc8181;
+        font-weight: 600;
+    }
+    
+    /* Tooltip style */
+    .tooltip {
+        color: #718096;
+        font-size: 0.8rem;
+        cursor: help;
+        border-bottom: 1px dashed #cbd5e0;
+    }
+    
+    /* Button styling */
+    .stButton button {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 0.5rem 2rem;
+        transition: all 0.2s ease;
+    }
+    .stButton button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .btn-primary button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    /* Footer */
+    .footer {
+        text-align: center;
+        padding: 1.5rem 0;
+        color: #a0aec0;
+        font-size: 0.85rem;
+        border-top: 1px solid #edf2f7;
+        margin-top: 2rem;
+    }
+    
+    /* Status messages */
+    .status-success {
+        background: #c6f6d5;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: #276749;
+        border-left: 4px solid #48bb78;
+    }
+    .status-info {
+        background: #bee3f8;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: #2b6cb0;
+        border-left: 4px solid #3182ce;
+    }
+    .status-warning {
+        background: #feebc8;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: #c05621;
+        border-left: 4px solid #dd6b20;
+    }
+    
+    /* Simple steps */
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        background: #f7fafc;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+    .step-number {
+        background: #667eea;
+        color: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# Cached pipeline steps (expensive on first run)
+# Cached Functions
 # ---------------------------------------------------------------------------
-@st.cache_data(show_spinner="Loading assessment data…")
+@st.cache_data(show_spinner="Loading your data...")
 def load_data(path: str) -> pd.DataFrame:
     return load_assessment_data(path)
 
-
-@st.cache_data(show_spinner="Engineering features (Step 1)…")
+@st.cache_data(show_spinner="Analyzing student patterns...")
 def engineer_features(_raw: pd.DataFrame) -> pd.DataFrame:
     return build_trimester_features(_raw)
 
-
-@st.cache_data(show_spinner="Training ML models (Step 2)…")
+@st.cache_data(show_spinner="Training prediction models...")
 def run_models(_features: pd.DataFrame):
     return train_and_compare_models(_features)
 
-
-@st.cache_data(show_spinner="Computing admin insights…")
+@st.cache_data(show_spinner="Calculating institutional insights...")
 def admin_insights(_raw: pd.DataFrame, _units: pd.DataFrame):
     return {
         "sinking": compute_sinking_subjects(_raw),
@@ -89,99 +337,109 @@ def admin_insights(_raw: pd.DataFrame, _units: pd.DataFrame):
         "gender": gender_performance_gap(_raw),
     }
 
-
-@st.cache_data(show_spinner="Computing cohort workload benchmark…")
+@st.cache_data(show_spinner="Computing workload benchmarks...")
 def cohort_study_load(_raw: pd.DataFrame) -> float:
     return compute_cohort_avg_study_load(_raw)
 
-
-def _resolve_feature_row(
-    student_id: str,
-    features: pd.DataFrame,
-    risk_df: pd.DataFrame | None,
-) -> pd.Series | None:
-    """Pick the best available feature row for GenAI (risk scores preferred)."""
-    if risk_df is not None and not risk_df.empty:
-        student_risk = risk_df[risk_df["STUDENTID_MASKED"].astype(str) == str(student_id)]
-        if not student_risk.empty:
-            return student_risk.sort_values("STUDYPERIOD").iloc[-1]
-
-    student_features = features[features["STUDENTID_MASKED"].astype(str) == str(student_id)]
-    if not student_features.empty:
-        return student_features.sort_values("STUDYPERIOD").iloc[-1]
-    return None
-
+# ---------------------------------------------------------------------------
+# Welcome Header
+# ---------------------------------------------------------------------------
+st.markdown("""
+<div class="welcome-header">
+    <h1>🎓 EDAPT</h1>
+    <p>Educational Analytics & Predictive Tool — Your early warning system for student success</p>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# SIDEBAR - Configuration & File Upload
+# Sidebar - Simple Upload
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.header("⚙️ Configuration")
+    st.markdown("### 📂 Step 1: Upload Your Data")
     
-    # ============================================================
-    # 📂 FILE UPLOADER - NEW!
-    # ============================================================
-    st.subheader("📂 Upload Data File")
-    
+    # Simple file uploader with nice styling
     uploaded_file = st.file_uploader(
-        "Upload Capstone_data CSV",
+        "Choose your student data file (CSV format)",
         type=['csv'],
-        help="Upload your student data CSV file (e.g., Capstone_data_20260324.csv)"
+        help="Upload the CSV file from your institution's data system"
     )
     
     if uploaded_file is not None:
-        # Save the file to a temporary location
+        # Save uploaded file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
-            temp_path = tmp_file.name
+            st.session_state['uploaded_data_path'] = tmp_file.name
+            st.session_state['uploaded_file_name'] = uploaded_file.name
         
-        # Store in session state so it persists across reruns
-        st.session_state['uploaded_data_path'] = temp_path
-        st.session_state['uploaded_file_name'] = uploaded_file.name
-        
-        st.success(f"✅ Uploaded: {uploaded_file.name}")
-        st.caption(f"📊 File size: {len(uploaded_file.getvalue()) / 1024:.1f} KB")
-        
-        # Show a quick preview
-        try:
-            df_preview = pd.read_csv(temp_path)
-            st.write("**Data Preview (first 3 rows):**")
-            st.dataframe(df_preview.head(3), use_container_width=True)
-            st.caption(f"📋 Total rows: {len(df_preview):,}")
-        except Exception as e:
-            st.warning(f"Could not preview file: {e}")
-    else:
-        st.info("📤 Upload a CSV file to begin")
+        # Success message
+        st.markdown(f"""
+        <div class="status-success">
+            ✅ <strong>File uploaded successfully!</strong><br>
+            <span style="font-size:0.85rem;">{uploaded_file.name} ({len(uploaded_file.getvalue()) / 1024:.1f} KB)</span>
+        </div>
+        """, unsafe_allow_html=True)
     
     st.divider()
     
-    # Data file path input (fallback)
-    data_path = st.text_input(
-        "Data file path (or use upload above)",
-        value=str(DEFAULT_DATA_PATH),
-        help="Local CSV export. Replace with LMS webhook URL in production.",
-    )
+    # If data is loaded, show student selector
+    if "data_loaded" in st.session_state and st.session_state.data_loaded:
+        st.markdown("### 👤 Step 2: Select a Student")
+        
+        all_students = st.session_state.get("all_students", [])
+        if all_students:
+            selected_student = st.selectbox(
+                "Choose a student to view their profile",
+                options=all_students,
+                help="Select any student to see their detailed performance"
+            )
+            st.session_state.selected_student = selected_student
     
-    # Use uploaded file if available, otherwise use the text input
-    if "uploaded_data_path" in st.session_state:
-        data_path = st.session_state['uploaded_data_path']
-        st.success(f"📁 Using uploaded file: {st.session_state.get('uploaded_file_name', '')}")
-
+    st.divider()
+    
+    # Help section
+    with st.expander("❓ Need Help?"):
+        st.markdown("""
+        **How to use EDAPT:**
+        
+        1. **Upload** your CSV data file above
+        2. **Wait** for the analysis to complete
+        3. **Explore** the tabs to see insights
+        4. **Find** at-risk students who need help
+        
+        **Need your data file?**
+        Contact your IT department for the student data export.
+        """)
 
 # ---------------------------------------------------------------------------
-# Load & process
+# Main Content - Load Data
 # ---------------------------------------------------------------------------
-# Check if we have uploaded data first
+data_path = st.session_state.get('uploaded_data_path', str(DEFAULT_DATA_PATH))
+
 try:
     raw = load_data(data_path)
-except FileNotFoundError as exc:
-    st.error(str(exc))
-    st.info("💡 **Tip:** Upload your CSV file using the file uploader in the sidebar, then refresh the page.")
-    st.stop()
-except Exception as exc:
-    st.error(f"Could not load data: {exc}")
+    st.session_state.data_loaded = True
+except FileNotFoundError:
+    st.session_state.data_loaded = False
+    # Show friendly upload prompt
+    st.markdown("""
+    <div style="text-align:center; padding:4rem 2rem;">
+        <div style="font-size:4rem; margin-bottom:1rem;">📊</div>
+        <h2 style="color:#4a5568; font-weight:600;">No Data Loaded Yet</h2>
+        <p style="color:#718096; font-size:1.1rem; max-width:500px; margin:0 auto;">
+            Please upload your student data CSV file using the file uploader in the sidebar.
+        </p>
+        <div style="margin-top:2rem; display:flex; gap:0.5rem; justify-content:center; flex-wrap:wrap;">
+            <span style="background:#edf2f7; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem;">📁 Click "Browse files"</span>
+            <span style="background:#edf2f7; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem;">⬆️ Select your CSV</span>
+            <span style="background:#edf2f7; padding:0.5rem 1rem; border-radius:8px; font-size:0.9rem;">✅ Wait for analysis</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     st.stop()
 
+# ---------------------------------------------------------------------------
+# Process Data
+# ---------------------------------------------------------------------------
 features = engineer_features(raw)
 units = build_unit_records(raw)
 summary = get_feature_summary(features)
@@ -189,597 +447,494 @@ summary = get_feature_summary(features)
 try:
     model_results, comparison_df, artifacts = run_models(features)
     risk_df = artifacts["risk_scores"]
-except ValueError as exc:
-    st.warning(str(exc))
+except ValueError:
     model_results, comparison_df, artifacts, risk_df = None, None, None, None
 
 insights = admin_insights(raw, units)
 cohort_avg_load = cohort_study_load(raw)
 all_students = list_students(raw)
+st.session_state.all_students = all_students
 
 if "selected_student" not in st.session_state and all_students:
     st.session_state.selected_student = all_students[0]
 
-with st.sidebar:
-    st.divider()
-    st.header("👤 Student Selector")
-    if all_students:
-        default_idx = (
-            all_students.index(st.session_state.selected_student)
-            if st.session_state.selected_student in all_students
-            else 0
-        )
-        selected_student = st.selectbox(
-            "Select student (STUDENTID_MASKED)",
-            options=all_students,
-            index=default_idx,
-            help="Choose any student to inspect in the Deep-Dive Profile tab.",
-        )
-        st.session_state.selected_student = selected_student
-        if st.button("🎲 Pick Random Student"):
-            st.session_state.selected_student = str(
-                pd.Series(all_students).sample(1, random_state=None).iloc[0]
-            )
-            st.rerun()
-    else:
-        st.warning("No students found in the dataset.")
-        selected_student = None
-    st.divider()
-    st.markdown(
-        "**LMS Integration (future)**  \n"
-        "The data loader in `src/data_loader.py` documents where to plug in "
-        "Canvas REST API or Moodle Web Services webhooks."
-    )
-    st.divider()
-    st.markdown(
-        "**GenAI API Keys (optional)**  \n"
-        "Set environment variables before launching:\n"
-        "- `OPENAI_API_KEY` — preferred\n"
-        "- `HUGGINGFACE_API_TOKEN` — free alternative\n\n"
-        "Without keys, the app uses an offline template."
-    )
+# ---------------------------------------------------------------------------
+# KPI Cards - Simple Overview
+# ---------------------------------------------------------------------------
+st.markdown("### 📊 Your Data at a Glance")
 
-selected_student = st.session_state.get("selected_student")
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="value">{summary['students']:,}</div>
+        <div class="label">🎓 Students</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="value">{summary['trimester_records']:,}</div>
+        <div class="label">📅 Study Periods</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="value">{summary['ml_ready_rows']:,}</div>
+        <div class="label">🤖 Records Analyzed</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    # Calculate pass rate
+    pass_rate = (raw['MARKPERCENT'] >= 50).mean() * 100
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="value" style="color: {'#48bb78' if pass_rate > 70 else '#ed8936' if pass_rate > 50 else '#fc8181'}">{pass_rate:.1f}%</div>
+        <div class="label">✅ Overall Pass Rate</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col5:
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="value">{raw['SUBJECTCODE'].nunique()}</div>
+        <div class="label">📚 Subjects</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# KPI row
+# Tabs - Simplified Labels
 # ---------------------------------------------------------------------------
-k1, k2, k3, k4, k5 = st.columns(5)
-k1.metric("Students", f"{summary['students']:,}")
-k2.metric("Trimester Records", f"{summary['trimester_records']:,}")
-k3.metric("ML-Ready Rows", f"{summary['ml_ready_rows']:,}")
-k4.metric("Avg Failed Units / Trimester", summary["avg_failed_units"])
-k5.metric("Pass Threshold", f"{PASS_MARK_THRESHOLD}%")
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "📋 Overview",
+    "🔍 Find At-Risk Students",
+    "📊 Subject Insights", 
+    "👤 Student Profile",
+    "🤖 Predictions",
+    "✉️ Intervention Emails"
+])
 
 # ---------------------------------------------------------------------------
-# Tabs
+# TAB 1: Overview
 # ---------------------------------------------------------------------------
-tab_overview, tab_features, tab_ml, tab_admin, tab_profile, tab_genai = st.tabs(
-    [
-        "📋 Overview",
-        "⚙️ Step 1: Features",
-        "🤖 Step 2: ML Models",
-        "📊 Step 3: Admin Insights",
-        "🔍 Student Deep-Dive Profile",
-        "✉️ Step 4: GenAI Intervention",
-    ]
-)
-
-# ---- Overview ----
-with tab_overview:
-    st.subheader("Dataset Snapshot")
-    st.dataframe(raw.head(20), use_container_width=True, hide_index=True)
-    st.download_button(
-        "Download engineered features (CSV)",
-        features.to_csv(index=False).encode(),
-        file_name="trimester_features.csv",
-        mime="text/csv",
-    )
-
-    fig = px.histogram(
-        raw,
-        x="MARKPERCENT",
-        nbins=50,
-        title="Distribution of Assessment Marks (%)",
-        labels={"MARKPERCENT": "Mark (%)"},
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-# ---- Step 1: Features ----
-with tab_features:
-    st.subheader("Step 1 — Data Transformation & Feature Engineering")
-    st.markdown(
-        "Transactional rows are aggregated to **one row per student, per trimester** "
-        "with the following engineered feature groups:"
-    )
-
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown("**Academic Momentum**")
-        st.markdown(
-            "- `GPA_TRAJECTORY_SLOPE` — slope of prior trimester averages\n"
-            "- `PRIOR_WEIGHTED_AVG` — weighted historical average\n"
-            "- `SUBJECT_CONSISTENCY_*` — performance by subject family (ICT, MBA, …)"
+with tab1:
+    st.markdown("### 📋 Overview of Your Data")
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.markdown("""
+        <div style="background:#f7fafc; padding:1rem; border-radius:12px; margin-bottom:1rem;">
+            <p style="margin:0; color:#4a5568; font-weight:500;">📌 What you're looking at:</p>
+            <p style="margin:0.5rem 0 0 0; color:#718096; font-size:0.95rem;">
+                This dashboard helps you find students who may need extra support.
+                The system has analyzed your data and identified patterns that predict student success or struggle.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Simple chart - Mark Distribution
+        st.markdown("#### 📈 Student Marks Distribution")
+        fig = px.histogram(
+            raw,
+            x="MARKPERCENT",
+            nbins=30,
+            title="",
+            labels={"MARKPERCENT": "Student Mark (%)"},
+            color_discrete_sequence=["#667eea"]
         )
-    with c2:
-        st.markdown("**Behavioral Red Flags**")
-        st.markdown(
-            "- `EARLY_WARNING_AVG` — first assessment mark (10–20% weight)\n"
-            "- `EARLY_WARNING_FAILS` — count of failed early assessments\n"
-            "- `MAX_ATTEMPT` / `AVG_ATTEMPT` — re-attempt history"
+        fig.add_vline(x=50, line_dash="dash", line_color="#fc8181", annotation_text="Pass Threshold (50%)")
+        fig.update_layout(
+            height=350,
+            showlegend=False,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=20, r=20, t=20, b=20)
         )
-    with c3:
-        st.markdown("**Structural Pressures**")
-        st.markdown(
-            "- `STUDY_LOAD_INTENSITY` — subjects per trimester\n"
-            "- `STUDY_LOAD_SPIKE` — load vs personal historical average\n"
-            "- `PEER_PERCENTILE` — rank within CLASSGROUP"
-        )
+        st.plotly_chart(fig, use_container_width=True)
+        
+        st.caption("💡 Students scoring below 50% may need additional support. Hover over the bars to see exact numbers.")
+    
+    with col2:
+        st.markdown("#### 🔍 Quick Insights")
+        
+        # Calculate some simple insights
+        total_students = summary['students']
+        high_risk_count = len(risk_df[risk_df["FAILURE_RISK_PROB"] >= HIGH_RISK_PROBABILITY_THRESHOLD]) if risk_df is not None else 0
+        
+        st.markdown(f"""
+        <div class="card-modern">
+            <h3>⚠️ At-Risk Students</h3>
+            <div class="big-number" style="color: {'#fc8181' if high_risk_count > 0 else '#48bb78'}">{high_risk_count:,}</div>
+            <div class="sub-text">Students flagged as needing immediate attention</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Show latest period
+        latest_period = raw['STUDYPERIOD'].max()
+        st.markdown(f"""
+        <div class="card-modern">
+            <h3>📅 Latest Data</h3>
+            <div class="big-number">{latest_period}</div>
+            <div class="sub-text">Most recent study period analyzed</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Show sample data
+        st.markdown("#### 📄 Data Preview")
+        st.dataframe(raw.head(5), use_container_width=True, hide_index=True)
 
-    display_cols = [
-        "STUDENTID_MASKED",
-        "STUDYPERIOD",
-        "TRIMESTER_AVG_MARK",
-        "GPA_TRAJECTORY_SLOPE",
-        "EARLY_WARNING_AVG",
-        "STUDY_LOAD_INTENSITY",
-        "STUDY_LOAD_SPIKE",
-        "PEER_PERCENTILE",
-        "TOTAL_FAILED_UNITS",
-        "MAX_ATTEMPT",
-    ]
-    st.dataframe(
-        features[display_cols].dropna(subset=["GPA_TRAJECTORY_SLOPE"]).head(50),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    student_pick = st.selectbox(
-        "Plot GPA trajectory for a student",
-        options=sorted(features["STUDENTID_MASKED"].unique())[:200],
-    )
-    student_data = features[features["STUDENTID_MASKED"] == student_pick].sort_values("STUDYPERIOD")
-    if len(student_data) > 1:
-        fig2 = px.line(
-            student_data,
-            x="STUDYPERIOD",
-            y="TRIMESTER_AVG_MARK",
-            markers=True,
-            title=f"GPA Trajectory — {student_pick}",
-            labels={"STUDYPERIOD": "Trimester", "TRIMESTER_AVG_MARK": "Avg Mark (%)"},
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-
-# ---- Step 2: ML ----
-with tab_ml:
-    st.subheader("Step 2 — Machine Learning Model Comparison")
-    st.markdown(
-        "Three models forecast **subsequent trimester performance** using features "
-        "from prior trimesters as inputs."
-    )
-
-    if comparison_df is not None:
-        st.markdown("### Model Comparison Table")
-        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
-
-        for result in model_results:
-            with st.expander(f"{result.name} — {result.task}"):
-                st.write(result.notes)
-                metric_cols = st.columns(len(result.metrics))
-                for col, (name, value) in zip(metric_cols, result.metrics.items()):
-                    col.metric(name, value)
-
-        st.markdown("### Predicted vs Actual (Linear Regression)")
-        lin_pipe = artifacts["linear"]
-        ml_frame = features[
-            features["HAS_HISTORY"] & features["NEXT_TRIMESTER_AVG_MARK"].notna()
-        ].dropna(subset=["PRIOR_WEIGHTED_AVG", "MAX_SUBJECT_DIFFICULTY"])
-        preds = lin_pipe.predict(
-            ml_frame[["PRIOR_WEIGHTED_AVG", "MAX_SUBJECT_DIFFICULTY"]]
-        )
-        scatter_df = pd.DataFrame(
-            {"Actual": ml_frame["NEXT_TRIMESTER_AVG_MARK"].values, "Predicted": preds}
-        )
-        fig3 = px.scatter(
-            scatter_df,
-            x="Actual",
-            y="Predicted",
-            opacity=0.3,
-            title="Linear Regression: Predicted vs Actual Next-Trimester Mark",
-            labels={"Actual": "Actual Mark (%)", "Predicted": "Predicted Mark (%)"},
-        )
-        fig3.add_shape(
-            type="line",
-            x0=0,
-            y0=0,
-            x1=100,
-            y1=100,
-            line=dict(dash="dash", color="gray"),
-        )
-        st.plotly_chart(fig3, use_container_width=True)
-    else:
-        st.info("ML models could not be trained — insufficient multi-trimester history.")
-
-# ---- Step 3: Admin ----
-with tab_admin:
-    st.subheader("Step 3 — Macro Insights for Academic Teams")
-
-    st.markdown("### 🚨 Sinking Subjects")
-    st.caption(
-        "Subjects whose mean mark is statistically significantly below the cohort average "
-        "(one-sample t-test, α = 0.05)."
-    )
-    sinking = insights["sinking"]
-    sinking_only = sinking[sinking["Is_Sinking"]]
-    c_left, c_right = st.columns([2, 1])
-    with c_left:
-        fig4 = px.bar(
-            sinking.head(20),
-            x="SUBJECTCODE",
-            y="Mean_Mark",
-            color="Is_Sinking",
-            title="Lowest-Performing Subjects (Top 20)",
-            labels={"Mean_Mark": "Mean Mark (%)", "Is_Sinking": "Statistically Sinking"},
-        )
-        fig4.add_hline(
-            y=sinking["Global_Mean"].iloc[0],
-            line_dash="dash",
-            annotation_text="Global Mean",
-        )
-        st.plotly_chart(fig4, use_container_width=True)
-    with c_right:
-        st.metric("Sinking Subjects Found", len(sinking_only))
-        st.dataframe(
-            sinking_only[["SUBJECTCODE", "Mean_Mark", "Gap_vs_Global", "P_Value"]].head(15),
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    st.divider()
-    st.markdown("### 🔁 The Re-Attempt Correlation")
-    re = insights["reattempt"]
-    r1, r2, r3, r4 = st.columns(4)
-    r1.metric("1st Attempt Fail Rate", f"{re['first_attempt_fail_pct']}%")
-    r2.metric("Re-Attempt Fail Rate", f"{re['reattempt_fail_pct']}%")
-    r3.metric("Students Who Re-Attempted", f"{re['reattempt_student_count']:,}")
-    r4.metric(
-        "Fail Rate (Re-Attempt Students)",
-        f"{re['reattempt_student_fail_pct']}%",
-    )
-
-    fig5 = px.bar(
-        x=["First Attempt", "Re-Attempt (≥2)"],
-        y=[re["first_attempt_fail_pct"], re["reattempt_fail_pct"]],
-        title="Unit Failure Rate by Attempt Number",
-        labels={"x": "Attempt Type", "y": "Failure Rate (%)"},
-    )
-    st.plotly_chart(fig5, use_container_width=True)
-
-    st.divider()
-    st.markdown("### Enrolment & Equity")
-    e1, e2 = st.columns(2)
-    with e1:
-        st.plotly_chart(
-            px.line(
-                insights["enrolment"],
-                x="STUDYPERIOD",
-                y="Unique_Students",
-                markers=True,
-                title="Unique Students per Trimester",
-            ),
-            use_container_width=True,
-        )
-    with e2:
-        st.plotly_chart(
-            px.bar(
-                insights["gender"],
-                x="GENDERCODE",
-                y="Mean_Mark",
-                title="Mean Mark by Gender",
-                labels={"Mean_Mark": "Mean Mark (%)"},
-            ),
-            use_container_width=True,
-        )
-
-# ---- Student Deep-Dive Profile ----
-with tab_profile:
-    st.subheader("Student Deep-Dive Profile")
-    st.caption(
-        "Select any student from the sidebar to review their mark trajectory, "
-        "workload intensity, and generate a workload-aware intervention email."
-    )
-
-    if not selected_student:
-        st.info("Select a student from the sidebar to begin.")
-    else:
-        try:
-            profile = build_student_summary(
-                raw, features, selected_student, cohort_avg=cohort_avg_load
-            )
-        except Exception as exc:
-            st.error(f"Could not build profile for {selected_student}: {exc}")
-            profile = None
-
-        if profile is not None:
-            workload = profile["workload"]
-            trajectory = profile["trajectory"]
-
-            h1, h2, h3, h4 = st.columns(4)
-            h1.metric("Student ID", selected_student)
-            h2.metric("Trimesters on Record", profile["trimesters_recorded"])
-            latest_mark = profile["latest_mark"]
-            h3.metric(
-                "Latest Avg Mark",
-                f"{latest_mark:.1f}%" if latest_mark is not None else "N/A",
-            )
-            h4.metric("Performance Trend", profile["trend_label"])
-
-            st.markdown("### 📈 Progress History — MARKPERCENT Trajectory")
-            if trajectory.empty:
-                st.warning("No assessment history found for this student.")
-            else:
-                chart_df = trajectory.set_index("STUDYPERIOD")[["MARKPERCENT"]]
-                st.line_chart(chart_df, height=320)
-
-                pass_rows = trajectory[trajectory["PASS_STATUS"] == "Passing"]
-                fail_rows = trajectory[trajectory["PASS_STATUS"] == "Failing"]
-                status_cols = st.columns(2)
-                with status_cols[0]:
-                    st.success(
-                        f"**Passing trimesters:** {', '.join(pass_rows['STUDYPERIOD'].astype(str).tolist()) or 'None'}"
-                    )
-                with status_cols[1]:
-                    st.error(
-                        f"**Failing trimesters:** {', '.join(fail_rows['STUDYPERIOD'].astype(str).tolist()) or 'None'}"
-                    )
-
-                st.caption(
-                    f"Dashed reference: pass threshold is {PASS_MARK_THRESHOLD}%. "
-                    "Chart shows average MARKPERCENT per trimester."
-                )
-
-            st.divider()
-            st.markdown("### 📚 Subject Overload Tracker")
-
-            w1, w2, w3 = st.columns(3)
-            w1.metric(
-                "Current Study Load",
-                f"{workload['concurrent_subjects']} subjects",
-                help=f"Unique SUBJECTCODEs in trimester {workload['latest_period']}",
-            )
-            w2.metric("Cohort Average Load", f"{workload['cohort_avg_load']:.1f} subjects")
-            w3.metric("Fixed Overload Threshold", f">{WORKLOAD_OVERLOAD_THRESHOLD} subjects")
-
-            if workload["is_overload"]:
-                st.error(
-                    f"**Workload Spike / High Overload Risk** — "
-                    f"This student is enrolled in **{workload['concurrent_subjects']} subjects** "
-                    f"in trimester **{workload['latest_period']}**. "
-                    f"Reason: {workload['overload_reason']}."
-                )
-            else:
-                st.success(
-                    f"Study load is within normal range "
-                    f"({workload['concurrent_subjects']} subjects in trimester {workload['latest_period']})."
-                )
-
-            if workload["subject_codes"]:
-                st.markdown(
-                    "**Enrolled subjects (latest trimester):** "
-                    + ", ".join(f"`{code}`" for code in workload["subject_codes"])
-                )
-
-            st.divider()
-            st.markdown("### ✉️ Workload-Aware Intervention Email")
-
-            feature_row = profile["feature_row"]
-            if feature_row is None:
-                feature_row = pd.Series(
-                    {
-                        "STUDYPERIOD": workload.get("latest_period"),
-                        "TRIMESTER_AVG_MARK": profile.get("latest_mark") or 0,
-                        "AGEGROUP": "Unknown",
-                        "STUDY_LOAD_INTENSITY": workload["concurrent_subjects"],
-                    }
-                )
-
-            genai_cols = st.columns([1, 2])
-            with genai_cols[0]:
-                provider = st.radio(
-                    "GenAI Provider",
-                    ["auto", "openai", "huggingface", "template"],
-                    horizontal=False,
-                    key="profile_genai_provider",
-                )
-            with genai_cols[1]:
-                st.markdown(
-                    f"The email will acknowledge the student's **{workload['concurrent_subjects']}-subject workload** "
-                    f"and offer realistic support for managing that pressure."
-                )
-
-            if st.button("✉️ Generate Workload-Aware Email", type="primary", key="profile_genai_btn"):
-                with st.spinner("Drafting personalised email…"):
-                    try:
-                        email_text, provider_used = generate_intervention_email(
-                            selected_student,
-                            feature_row,
-                            provider=provider,
-                            concurrent_subjects=workload["concurrent_subjects"],
-                        )
-                        st.success(f"Generated using: **{provider_used}**")
-                        st.text_area(
-                            "Email Draft (editable)",
-                            email_text,
-                            height=400,
-                            key="profile_email_output",
-                        )
-                        st.download_button(
-                            "Download email draft (.txt)",
-                            email_text.encode(),
-                            file_name=f"intervention_{selected_student}.txt",
-                            key="profile_email_download",
-                        )
-                    except Exception as exc:
-                        st.error(f"Email generation failed: {exc}")
-
-# ---- Step 4: GenAI ----
-with tab_genai:
-    st.subheader("Step 4 — Generative AI Intervention Engine")
-    st.markdown(
-        "Select a **high-risk student** flagged by the Logistic Regression model. "
-        "Click the button to generate a personalised intervention email draft."
-    )
-
+# ---------------------------------------------------------------------------
+# TAB 2: Find At-Risk Students
+# ---------------------------------------------------------------------------
+with tab2:
+    st.markdown("### 🔍 Find Students Who Need Support")
+    
     if risk_df is not None:
         high_risk = risk_df[
             risk_df["FAILURE_RISK_PROB"] >= HIGH_RISK_PROBABILITY_THRESHOLD
         ].sort_values("FAILURE_RISK_PROB", ascending=False)
-
-        st.metric(
-            "High-Risk Students Flagged",
-            len(high_risk),
-            help=f"Failure probability ≥ {HIGH_RISK_PROBABILITY_THRESHOLD:.0%}",
-        )
-
-        risk_display = high_risk[
-            [
-                "STUDENTID_MASKED",
-                "STUDYPERIOD",
-                "TRIMESTER_AVG_MARK",
-                "FAILURE_RISK_PROB",
-                "GPA_TRAJECTORY_SLOPE",
-                "EARLY_WARNING_AVG",
-                "TOTAL_FAILED_UNITS",
-            ]
-        ].head(30)
-        risk_display = risk_display.copy()
-        risk_display["FAILURE_RISK_PROB"] = (
-            risk_display["FAILURE_RISK_PROB"].map(lambda x: f"{x:.0%}")
-        )
-        st.dataframe(risk_display, use_container_width=True, hide_index=True)
-
-        student_options = high_risk["STUDENTID_MASKED"] + " | T" + high_risk["STUDYPERIOD"].astype(str)
-        selected_label = st.selectbox("Select student record", student_options.tolist())
-        selected_id = selected_label.split(" | ")[0]
-        selected_period = float(selected_label.split(" | T")[1])
-
-        row = high_risk[
-            (high_risk["STUDENTID_MASKED"] == selected_id)
-            & (high_risk["STUDYPERIOD"] == selected_period)
-        ].iloc[0]
-
-        provider = st.radio(
-            "GenAI Provider",
-            ["auto", "openai", "huggingface", "template"],
-            horizontal=True,
-            help="'auto' tries OpenAI → Hugging Face → offline template.",
-        )
-
-        if st.button("✉️ Generate Intervention Email", type="primary"):
-            load_info = compute_current_study_load(
-                raw, selected_id, cohort_avg=cohort_avg_load
-            )
-            concurrent = load_info["concurrent_subjects"]
-            with st.spinner("Drafting personalised email…"):
-                try:
-                    email_text, provider_used = generate_intervention_email(
-                        selected_id,
-                        row,
-                        provider=provider,
-                        concurrent_subjects=concurrent,
-                    )
-                    st.success(f"Generated using: **{provider_used}**")
-                    if load_info["is_overload"]:
-                        st.warning(
-                            f"Workload note: student is managing **{concurrent} subjects** "
-                            f"(flagged as high overload risk)."
-                        )
-                    st.text_area("Email Draft (editable)", email_text, height=400)
-                    st.download_button(
-                        "Download email draft (.txt)",
-                        email_text.encode(),
-                        file_name=f"intervention_{selected_id}.txt",
-                    )
-                except Exception as exc:
-                    st.error(f"Email generation failed: {exc}")
+        
+        st.markdown(f"""
+        <div style="background:#f7fafc; padding:1rem 1.5rem; border-radius:12px; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+            <div>
+                <span style="font-weight:600; font-size:1.1rem;">🚨 High-Risk Students</span>
+                <span style="color:#718096; margin-left:0.5rem;">Students with the highest chance of failing</span>
+            </div>
+            <span class="badge-high">{len(high_risk)} students</span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if len(high_risk) > 0:
+            # Display high-risk students in a friendly table
+            display_df = high_risk.head(20)[
+                ["STUDENTID_MASKED", "TRIMESTER_AVG_MARK", "FAILURE_RISK_PROB", "TOTAL_FAILED_UNITS"]
+            ].copy()
+            display_df.columns = ["Student ID", "Current Mark", "Risk Level", "Failed Units"]
+            display_df["Risk Level"] = display_df["Risk Level"].apply(lambda x: f"{x:.0%}")
+            
+            st.dataframe(display_df, use_container_width=True, hide_index=True)
+            
+            st.caption("💡 These students should be contacted for support. Visit the 'Intervention Emails' tab to generate messages.")
+        else:
+            st.success("🎉 No high-risk students found! Great job!")
     else:
-        st.info("Train ML models first to identify at-risk students.")
+        st.info("📊 Run the predictions first to see at-risk students.")
+
+# ---------------------------------------------------------------------------
+# TAB 3: Subject Insights
+# ---------------------------------------------------------------------------
+with tab3:
+    st.markdown("### 📊 Subject Performance Insights")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 📉 Sinking Subjects")
+        st.caption("Subjects where students score significantly lower than average")
+        
+        sinking = insights["sinking"]
+        sink_display = sinking.head(10)[["SUBJECTCODE", "Mean_Mark", "Gap_vs_Global", "Is_Sinking"]].copy()
+        sink_display.columns = ["Subject", "Avg Mark", "vs Average", "Sinking?"]
+        
+        st.dataframe(sink_display, use_container_width=True, hide_index=True)
+        st.caption("🔴 Subjects marked as 'Sinking' need attention - consider additional resources.")
+    
+    with col2:
+        st.markdown("#### 🔁 Re-Attempt Impact")
+        st.caption("What happens when students retake subjects")
+        
+        re = insights["reattempt"]
+        
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.markdown(f"""
+            <div class="card-modern" style="text-align:center;">
+                <div style="color:#718096; font-size:0.85rem;">First Attempt</div>
+                <div style="font-size:2rem; font-weight:700; color:#48bb78;">{re['first_attempt_fail_pct']}%</div>
+                <div style="color:#718096; font-size:0.8rem;">fail rate</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with col_b:
+            st.markdown(f"""
+            <div class="card-modern" style="text-align:center;">
+                <div style="color:#718096; font-size:0.85rem;">Re-Attempt</div>
+                <div style="font-size:2rem; font-weight:700; color:#fc8181;">{re['reattempt_fail_pct']}%</div>
+                <div style="color:#718096; font-size:0.8rem;">fail rate</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background:#edf2f7; padding:0.75rem 1rem; border-radius:10px; margin-top:0.5rem;">
+            <span style="font-weight:600;">💡 Key Insight:</span>
+            <span style="color:#4a5568;">Students who retake subjects are <span style="color:#fc8181; font-weight:700;">{re['reattempt_fail_pct'] / re['first_attempt_fail_pct']:.0f}x</span> more likely to fail again.</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# TAB 4: Student Profile
+# ---------------------------------------------------------------------------
+with tab4:
+    st.markdown("### 👤 Student Profile")
+    
+    if not all_students:
+        st.info("No students found in the dataset.")
+    else:
+        student_id = st.session_state.get("selected_student", all_students[0])
+        
+        try:
+            profile = build_student_summary(raw, features, student_id, cohort_avg=cohort_avg_load)
+        except Exception:
+            profile = None
+        
+        if profile is not None:
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.markdown(f"""
+                <div class="card-modern" style="text-align:center;">
+                    <div style="color:#718096; font-size:0.85rem;">Student</div>
+                    <div style="font-size:1.2rem; font-weight:600;">{student_id}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                trend = profile.get("trend_label", "Unknown")
+                trend_color = "#48bb78" if trend == "Improving" else "#fc8181" if trend == "Declining" else "#ed8936"
+                st.markdown(f"""
+                <div class="card-modern" style="text-align:center;">
+                    <div style="color:#718096; font-size:0.85rem;">Performance Trend</div>
+                    <div style="font-size:1.2rem; font-weight:600; color:{trend_color};">{trend}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col3:
+                latest = profile.get("latest_mark", "N/A")
+                if latest != "N/A":
+                    latest = f"{latest:.1f}%"
+                    latest_color = "#48bb78" if float(latest.replace("%","")) >= 50 else "#fc8181"
+                else:
+                    latest_color = "#718096"
+                st.markdown(f"""
+                <div class="card-modern" style="text-align:center;">
+                    <div style="color:#718096; font-size:0.85rem;">Latest Average</div>
+                    <div style="font-size:1.2rem; font-weight:600; color:{latest_color};">{latest}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col4:
+                load = profile.get("workload", {}).get("concurrent_subjects", "N/A")
+                load_color = "#fc8181" if load > 3 else "#48bb78"
+                st.markdown(f"""
+                <div class="card-modern" style="text-align:center;">
+                    <div style="color:#718096; font-size:0.85rem;">Subjects Taking</div>
+                    <div style="font-size:1.2rem; font-weight:600; color:{load_color};">{load}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Trajectory chart
+            trajectory = profile.get("trajectory")
+            if trajectory is not None and not trajectory.empty:
+                st.markdown("#### 📈 Performance Over Time")
+                fig = px.line(
+                    trajectory,
+                    x="STUDYPERIOD",
+                    y="MARKPERCENT",
+                    markers=True,
+                    title="",
+                    labels={"STUDYPERIOD": "Study Period", "MARKPERCENT": "Average Mark (%)"}
+                )
+                fig.add_hline(y=50, line_dash="dash", line_color="#fc8181", annotation_text="Pass Threshold")
+                fig.update_layout(
+                    height=300,
+                    showlegend=False,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=20, r=20, t=20, b=20)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Workload info
+            workload = profile.get("workload", {})
+            if workload.get("is_overload"):
+                st.warning(f"⚠️ **Workload Alert:** This student is taking {workload['concurrent_subjects']} subjects, which exceeds the recommended load.")
+            else:
+                st.success(f"✅ Study load is within normal range ({workload['concurrent_subjects']} subjects).")
+        else:
+            st.warning("Could not load profile for this student.")
+
+# ---------------------------------------------------------------------------
+# TAB 5: Predictions
+# ---------------------------------------------------------------------------
+with tab5:
+    st.markdown("### 🤖 How We Predict Student Success")
+    
+    if comparison_df is not None:
+        st.markdown("""
+        <div style="background:#f7fafc; padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+            <p style="margin:0; color:#4a5568;">
+                The system uses <strong>three different methods</strong> to predict student success.
+                Each method looks at different factors and gives us a more complete picture.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Simple model comparison
+        col1, col2, col3 = st.columns(3)
+        
+        models = [
+            ("📊 Logistic Regression", "Pass/Fail", "Looks at marks, failed units, age group"),
+            ("📈 Linear Regression", "Exact Mark", "Looks at prior marks, subject difficulty"),
+            ("🌲 Random Forest", "Pass/Fail", "Looks at country, gender, attempts")
+        ]
+        
+        for col, (name, task, desc) in zip([col1, col2, col3], models):
+            with col:
+                st.markdown(f"""
+                <div class="card-modern">
+                    <h3>{name}</h3>
+                    <p style="font-size:0.9rem; color:#4a5568;"><strong>Task:</strong> {task}</p>
+                    <p style="font-size:0.85rem; color:#718096;">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Show comparison table
+        st.markdown("#### 📊 Model Performance Comparison")
+        st.dataframe(comparison_df, use_container_width=True, hide_index=True)
+        
+        st.caption("💡 Higher accuracy numbers mean more reliable predictions. Random Forest typically performs best.")
+        
+        # Show prediction chart if available
+        if artifacts is not None and "linear" in artifacts:
+            st.markdown("#### 📈 Predicted vs Actual Marks")
+            lin_pipe = artifacts["linear"]
+            ml_frame = features[
+                features["HAS_HISTORY"] & features["NEXT_TRIMESTER_AVG_MARK"].notna()
+            ].dropna(subset=["PRIOR_WEIGHTED_AVG", "MAX_SUBJECT_DIFFICULTY"])
+            
+            if len(ml_frame) > 0:
+                preds = lin_pipe.predict(
+                    ml_frame[["PRIOR_WEIGHTED_AVG", "MAX_SUBJECT_DIFFICULTY"]]
+                )
+                scatter_df = pd.DataFrame(
+                    {"Actual": ml_frame["NEXT_TRIMESTER_AVG_MARK"].values, "Predicted": preds}
+                )
+                fig = px.scatter(
+                    scatter_df,
+                    x="Actual",
+                    y="Predicted",
+                    opacity=0.4,
+                    title="",
+                    labels={"Actual": "Actual Mark (%)", "Predicted": "Predicted Mark (%)"}
+                )
+                fig.add_shape(
+                    type="line",
+                    x0=0,
+                    y0=0,
+                    x1=100,
+                    y1=100,
+                    line=dict(dash="dash", color="gray")
+                )
+                fig.update_layout(
+                    height=350,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    margin=dict(l=20, r=20, t=20, b=20)
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                st.caption("💡 Points close to the diagonal line are perfectly predicted. The closer the points cluster to the line, the better the model.")
+    else:
+        st.info("📊 Train the prediction models to see results here.")
+
+# ---------------------------------------------------------------------------
+# TAB 6: Intervention Emails
+# ---------------------------------------------------------------------------
+with tab6:
+    st.markdown("### ✉️ Generate Support Emails for At-Risk Students")
+    
+    st.markdown("""
+    <div style="background:#f7fafc; padding:1rem; border-radius:12px; margin-bottom:1.5rem;">
+        <p style="margin:0; color:#4a5568;">
+            💡 Select a student and generate a personalised email to offer them support. 
+            The email will be tailored to their specific situation and risk factors.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if risk_df is not None:
+        high_risk = risk_df[
+            risk_df["FAILURE_RISK_PROB"] >= HIGH_RISK_PROBABILITY_THRESHOLD
+        ].sort_values("FAILURE_RISK_PROB", ascending=False)
+        
+        if len(high_risk) > 0:
+            st.info(f"📋 {len(high_risk)} students are flagged as needing support. Select one below to generate an email.")
+            
+            # Student selector
+            student_options = high_risk["STUDENTID_MASKED"].tolist()
+            selected_student = st.selectbox(
+                "Select a student to support",
+                options=student_options,
+                help="Choose a student from the list of at-risk students"
+            )
+            
+            if selected_student:
+                student_data = high_risk[high_risk["STUDENTID_MASKED"] == selected_student].iloc[0]
+                
+                # Show student's current situation
+                st.markdown("#### 📊 Student Summary")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Current Mark", f"{student_data['TRIMESTER_AVG_MARK']:.1f}%")
+                with col2:
+                    st.metric("Risk Level", f"{student_data['FAILURE_RISK_PROB']:.0%}")
+                with col3:
+                    st.metric("Failed Units", f"{student_data['TOTAL_FAILED_UNITS']}")
+                
+                # Generate email button
+                if st.button("✉️ Generate Support Email", type="primary"):
+                    load_info = compute_current_study_load(
+                        raw, selected_student, cohort_avg=cohort_avg_load
+                    )
+                    concurrent = load_info["concurrent_subjects"]
+                    
+                    with st.spinner("Creating a personalised support email..."):
+                        try:
+                            email_text, provider_used = generate_intervention_email(
+                                selected_student,
+                                student_data,
+                                provider="template",
+                                concurrent_subjects=concurrent,
+                            )
+                            st.success(f"✅ Email generated successfully!")
+                            
+                            st.markdown("#### 📧 Email Draft")
+                            st.text_area(
+                                "Review and edit the email below before sending:",
+                                email_text,
+                                height=400,
+                                key="email_draft"
+                            )
+                            
+                            # Download button
+                            st.download_button(
+                                "📥 Download Email",
+                                email_text.encode(),
+                                file_name=f"support_email_{selected_student}.txt",
+                                mime="text/plain"
+                            )
+                        except Exception as e:
+                            st.error(f"Could not generate email: {e}")
+        else:
+            st.success("🎉 No high-risk students found! All students are on track.")
+    else:
+        st.info("📊 Run the predictions first to identify at-risk students.")
 
 # ---------------------------------------------------------------------------
 # Footer
 # ---------------------------------------------------------------------------
-st.divider()
-st.markdown(
-    "**Modular architecture:** `src/data_loader.py` → `src/feature_engineering.py` "
-    "→ `src/ml_models.py` → `src/insights.py` → `src/student_profile.py` "
-    "→ `src/genai_intervention.py`"
-)
-
-
-# =====================================================================
-# SYSTEM AUTOMATED POST-ML PREDICTION EXPORT PANEL (REPAIRED PATCH)
-# =====================================================================
-st.markdown("---")
-st.header("📥 Export AI Predictive At-Risk Registry")
-
-ml_dataframe = None
-
-# 1. Scan Streamlit's cache memory for data tables matching keywords
-for key in st.session_state.keys():
-    if any(kw in key.lower() for kw in ['model', 'predict', 'result', 'feature', 'final', 'output', 'df']):
-        if isinstance(st.session_state[key], pd.DataFrame):
-            ml_dataframe = st.session_state[key]
-            break
-
-# 2. Check local or global script variables if memory cache is empty
-if ml_dataframe is None:
-    for var_name in ['_features', 'df_features', 'features_df', 'predictions_df', 'results_df', 'final_df', 'df', 'data']:
-        if var_name in locals() or var_name in globals():
-            possible_df = locals().get(var_name) or globals().get(var_name)
-            if isinstance(possible_df, pd.DataFrame):
-                ml_dataframe = possible_df
-                break
-
-# 3. Process the table data safely
-if ml_dataframe is not None:
-    # Identify column names containing ML labels or risk metrics
-    ml_cols = [c for c in ml_dataframe.columns if any(w in c.lower() for w in ['predict', 'risk', 'label', 'fail', 'logistic', 'forest', 'regression'])]
-    
-    if ml_cols:
-        # AFTER ML: Filter out student profiles flagged as failures or high risk
-        mask = ml_dataframe[ml_cols].astype(str).str.lower().str.contains('high|fail|risk|1|true', na=False).any(axis=1)
-        at_risk_registry = ml_dataframe[mask]
-        st.success("🤖 **AI Predictive Engine Data Connected:** This list shows students forecasted to fail future subjects using your ML algorithms.")
-    else:
-        # BEFORE ML FALLBACK: Dynamically pull students with marks or scores under 50%
-        score_cols = [c for c in ml_dataframe.columns if any(w in c.lower() for w in ['percent', 'mark', 'grade', 'score', 'trajectory', 'slope'])]
-        if score_cols:
-            mask = (ml_dataframe[score_cols[0]] < 50)
-            at_risk_registry = ml_dataframe[mask]
-        else:
-            at_risk_registry = ml_dataframe.head(25) # Hard fallback to guarantee rows exist
-        st.info("📊 **Feature Matrix Connected:** Exporting based on engineered early risk warning indices prior to final classification sorting.")
-
-    # 4. Render the Download User Interface Elements
-    if not at_risk_registry.empty:
-        st.write(f"📋 Found **{len(at_risk_registry)}** flagged student profiles prioritized for academic intervention.")
-        
-        # Display data summary matrix on layout screen
-        preview_columns = [c for c in ['STUDENTID_MASKED', 'SUBJECTCODE', 'STUDYPERIOD'] + ml_cols if c in at_risk_registry.columns]
-        st.dataframe(at_risk_registry[preview_columns].drop_duplicates().head(5))
-        
-        # Convert table to clean CSV bytes
-        csv_bytes = at_risk_registry.to_csv(index=False).encode('utf-8')
-        
-        # Streamlit standard download button asset
-        st.download_button(
-            label="📥 Download Machine Learning At-Risk Registry (CSV File)",
-            data=csv_bytes,
-            file_name="ml_early_detection_at_risk_students.csv",
-            mime="text/csv",
-            help="Click here to download the finalized prognostic AI dataset output for institutional administration planning."
-        )
-    else:
-        st.warning("Prediction processing active, but no student rows currently match the risk threshold filters.")
-else:
-    st.error("System pipeline architecture routing error: Unable to map the active state dataframe grid matrix automatically.")
+st.markdown("""
+<div class="footer">
+    EDAPT - Educational Analytics & Predictive Tool 🎓
+</div>
+""", unsafe_allow_html=True)
