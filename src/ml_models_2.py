@@ -1,9 +1,8 @@
 """
-Step 2 — Machine Learning Model Comparison (FIXED: Student-based splitting)
+Step 2 — Machine Learning Model Comparison.
 
 Trains three distinct models using past trimesters to forecast subsequent
 performance, then returns evaluation metrics for the UI comparison table.
-CRITICAL FIX: Splits by STUDENTID (not rows) to prevent data leakage.
 """
 
 from __future__ import annotations
@@ -54,10 +53,12 @@ def train_and_compare_models(
 ) -> tuple[list[ModelResult], pd.DataFrame, dict]:
     """
     Train Logistic Regression, Linear Regression, and Random Forest.
-    
-    CRITICAL FIX: Splits by STUDENTID, not rows!
-    This prevents data leakage where the same student appears in both
-    training and test sets.
+
+    Returns
+    -------
+    results : list of ModelResult for the comparison table
+    comparison_df : tidy DataFrame ready for st.dataframe()
+    artifacts : fitted models + test predictions for downstream use
     """
     ml = _prepare_ml_frame(features)
     if len(ml) < 50:
@@ -66,24 +67,6 @@ def train_and_compare_models(
             "Need students with at least two trimesters of history."
         )
 
-    # ==============================================================
-    # CRITICAL FIX: Split by STUDENTID, not rows
-    # ==============================================================
-    
-    # Get unique students
-    unique_students = ml["STUDENTID_MASKED"].unique()
-    
-    # Split students (not rows) into train and test
-    train_students, test_students = train_test_split(
-        unique_students,
-        test_size=test_size,
-        random_state=random_state,
-    )
-    
-    # Get rows for train and test students
-    train_indices = ml[ml["STUDENTID_MASKED"].isin(train_students)].index
-    test_indices = ml[ml["STUDENTID_MASKED"].isin(test_students)].index
-    
     # ------------------------------------------------------------------ #
     # 1. Logistic Regression — binary Pass/Fail
     #    Features: Avg Mark, Total Failed Units, Age Group
@@ -92,10 +75,9 @@ def train_and_compare_models(
     X_log = ml[log_features]
     y_log = ml["NEXT_PASS_FAIL"]
 
-    X_log_train = X_log.loc[train_indices]
-    X_log_test = X_log.loc[test_indices]
-    y_log_train = y_log.loc[train_indices]
-    y_log_test = y_log.loc[test_indices]
+    X_log_train, X_log_test, y_log_train, y_log_test = train_test_split(
+        X_log, y_log, test_size=test_size, random_state=random_state, stratify=y_log
+    )
 
     log_pipe = Pipeline(
         [
@@ -130,14 +112,9 @@ def train_and_compare_models(
     X_lin = ml[lin_features].dropna()
     y_lin = ml.loc[X_lin.index, "NEXT_TRIMESTER_AVG_MARK"]
 
-    # Align indices for train/test split
-    lin_train_indices = X_lin.index.intersection(train_indices)
-    lin_test_indices = X_lin.index.intersection(test_indices)
-
-    X_lin_train = X_lin.loc[lin_train_indices]
-    X_lin_test = X_lin.loc[lin_test_indices]
-    y_lin_train = y_lin.loc[lin_train_indices]
-    y_lin_test = y_lin.loc[lin_test_indices]
+    X_lin_train, X_lin_test, y_lin_train, y_lin_test = train_test_split(
+        X_lin, y_lin, test_size=test_size, random_state=random_state
+    )
 
     lin_pipe = Pipeline(
         [
@@ -149,9 +126,9 @@ def train_and_compare_models(
     lin_pred = lin_pipe.predict(X_lin_test)
 
     lin_metrics = {
-        "R² Score": round(r2_score(y_lin_test, lin_pred), 4) if len(lin_test_indices) > 0 else None,
-        "MAE": round(mean_absolute_error(y_lin_test, lin_pred), 4) if len(lin_test_indices) > 0 else None,
-        "RMSE": round(float(np.sqrt(mean_squared_error(y_lin_test, lin_pred))), 4) if len(lin_test_indices) > 0 else None,
+        "R² Score": round(r2_score(y_lin_test, lin_pred), 4),
+        "MAE": round(mean_absolute_error(y_lin_test, lin_pred), 4),
+        "RMSE": round(float(np.sqrt(mean_squared_error(y_lin_test, lin_pred))), 4),
     }
 
     # ------------------------------------------------------------------ #
@@ -161,10 +138,9 @@ def train_and_compare_models(
     X_rf = ml[rf_features]
     y_rf = ml["NEXT_PASS_FAIL"]
 
-    X_rf_train = X_rf.loc[train_indices]
-    X_rf_test = X_rf.loc[test_indices]
-    y_rf_train = y_rf.loc[train_indices]
-    y_rf_test = y_rf.loc[test_indices]
+    X_rf_train, X_rf_test, y_rf_train, y_rf_test = train_test_split(
+        X_rf, y_rf, test_size=test_size, random_state=random_state, stratify=y_rf
+    )
 
     rf_pipe = Pipeline(
         [
@@ -229,22 +205,18 @@ def train_and_compare_models(
         rows.append(row)
     comparison_df = pd.DataFrame(rows)
 
-    # ------------------------------------------------------------------ #
-    # Risk scores for ALL ML-ready rows (FIXED: all students)
-    # ------------------------------------------------------------------ #
-    # Calculate risk scores for ALL students (including training set)
-    ml_all = _prepare_ml_frame(features)
-    log_input = ml_all[log_features]
+    # Risk scores for all ML-ready rows (used by GenAI tab)
+    ml = ml.copy()
+    log_input = ml[log_features]
     pass_idx = int(np.where(log_pipe.named_steps["clf"].classes_ == 1)[0][0])
-    ml_all["FAILURE_RISK_PROB"] = 1 - log_pipe.predict_proba(log_input)[:, pass_idx]
+    ml["FAILURE_RISK_PROB"] = 1 - log_pipe.predict_proba(log_input)[:, pass_idx]
 
     artifacts = {
         "logistic": log_pipe,
         "linear": lin_pipe,
         "random_forest": rf_pipe,
-        "risk_scores": ml_all,  # ALL students, not just test set
-        "train_size": len(train_indices),
-        "test_size": len(test_indices),
+        "risk_scores": ml,
+        "train_size": len(ml),
     }
 
     return results, comparison_df, artifacts

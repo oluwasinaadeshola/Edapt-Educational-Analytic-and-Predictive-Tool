@@ -35,7 +35,7 @@ from src.insights import (
     gender_performance_gap,
     trimester_enrolment_trends,
 )
-from src.ml_models import train_and_compare_models
+from src.ml_models_2 import train_and_compare_models
 from src.student_profile import (
     build_student_summary,
     compute_cohort_avg_study_load,

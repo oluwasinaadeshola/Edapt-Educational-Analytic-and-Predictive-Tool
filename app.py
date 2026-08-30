@@ -34,7 +34,7 @@ from src.insights import (
     gender_performance_gap,
     trimester_enrolment_trends,
 )
-from src.ml_models import train_and_compare_models
+from src.ml_models_2 import train_and_compare_models
 from src.student_profile import (
     build_student_summary,
     compute_cohort_avg_study_load,
@@ -621,11 +621,90 @@ with tab2:
             st.dataframe(display_df, use_container_width=True, hide_index=True)
             
             st.caption("💡 These students should be contacted for support. Visit the 'Intervention Emails' tab to generate messages.")
+            
+            # ================================================================
+            # 📥 DOWNLOAD ALL AT-RISK STUDENTS (ADD THIS SECTION)
+            # ================================================================
+            st.divider()
+            st.markdown("### 📥 Export All At-Risk Students")
+            
+            # Create a copy with ALL at-risk students (not just the first 20)
+            all_at_risk = high_risk.copy()
+            
+            # Add priority levels based on risk probability
+            all_at_risk["RISK_LEVEL"] = all_at_risk["FAILURE_RISK_PROB"].apply(
+                lambda x: "🔴 High" if x >= 0.8 else "🟡 Medium" if x >= 0.65 else "🟢 Low"
+            )
+            all_at_risk["PRIORITY"] = all_at_risk["FAILURE_RISK_PROB"].apply(
+                lambda x: "🔴 URGENT" if x >= 0.8 else "🟡 Monitor" if x >= 0.65 else "🟢 Review"
+            )
+            
+            # Select key columns for export (only those that exist)
+            export_cols = [
+                "STUDENTID_MASKED",
+                "STUDYPERIOD", 
+                "TRIMESTER_AVG_MARK",
+                "FAILURE_RISK_PROB",
+                "RISK_LEVEL",
+                "PRIORITY",
+                "TOTAL_FAILED_UNITS",
+                "MAX_ATTEMPT",
+                "EARLY_WARNING_AVG",
+            ]
+            # Only include columns that actually exist
+            export_cols = [col for col in export_cols if col in all_at_risk.columns]
+            export_df = all_at_risk[export_cols].copy()
+            
+            # Format risk as percentage
+            export_df["FAILURE_RISK_PROB"] = export_df["FAILURE_RISK_PROB"].apply(lambda x: f"{x:.1%}")
+            
+            # Show the total count
+            st.info(f"📋 **{len(export_df)}** at-risk students ready for export")
+            
+            # Show preview of who will be exported
+            st.markdown("#### 📊 Preview (First 10 Students)")
+            st.dataframe(export_df.head(10), use_container_width=True, hide_index=True)
+            
+            # Create columns for download options
+            col_d1, col_d2 = st.columns(2)
+            
+            with col_d1:
+                # Download button for ALL at-risk students
+                csv_bytes = export_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label=f"📥 Download All {len(export_df)} At-Risk Students",
+                    data=csv_bytes,
+                    file_name="edapt_all_at_risk_students.csv",
+                    mime="text/csv",
+                    help=f"Download all {len(export_df)} at-risk students for intervention planning",
+                    use_container_width=True
+                )
+            
+            with col_d2:
+                # Filter by priority level
+                priority_filter = st.multiselect(
+                    "Filter by Priority (Optional)",
+                    options=["🔴 URGENT", "🟡 Monitor", "🟢 Review"],
+                    default=["🔴 URGENT", "🟡 Monitor", "🟢 Review"],
+                    help="Select which priority levels to include in the download"
+                )
+                
+                if priority_filter:
+                    filtered_df = export_df[export_df["PRIORITY"].isin(priority_filter)]
+                    if not filtered_df.empty:
+                        filtered_csv = filtered_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label=f"📥 Download {len(filtered_df)} Filtered Students",
+                            data=filtered_csv,
+                            file_name="edapt_filtered_at_risk_students.csv",
+                            mime="text/csv",
+                            help="Download only the selected priority levels",
+                            use_container_width=True
+                        )
         else:
             st.success("🎉 No high-risk students found! Great job!")
     else:
         st.info("📊 Run the predictions first to see at-risk students.")
-
 # ---------------------------------------------------------------------------
 # TAB 3: Subject Insights
 # ---------------------------------------------------------------------------
@@ -803,7 +882,7 @@ with tab5:
         st.markdown("#### 📊 Model Performance Comparison")
         st.dataframe(comparison_df, use_container_width=True, hide_index=True)
         
-        st.caption("💡 Higher accuracy numbers mean more reliable predictions. Random Forest typically performs best.")
+        #st.caption("💡 Higher accuracy numbers mean more reliable predictions. Random Forest typically performs best.")
         
         # Show prediction chart if available
         if artifacts is not None and "linear" in artifacts:
