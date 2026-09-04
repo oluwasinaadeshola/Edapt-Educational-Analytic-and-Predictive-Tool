@@ -1015,5 +1015,6 @@ with tab6:
 st.markdown("""
 <div class="footer">
     EDAPT - Educational Analytics & Predictive Tool 🎓
+    Project designed by Oluwasina, Mustapha, Sujit and Subham.
 </div>
 """, unsafe_allow_html=True)
