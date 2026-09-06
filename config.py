@@ -9,7 +9,7 @@ from pathlib import Path
 # Local file path — replace with LMS webhook endpoint in production.
 # See src/data_loader.py for Canvas/Moodle integration notes.
 # ---------------------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).parent
+PROJECT_ROOT = Path(__file__).parent # Gets the folder containing the current script, then goes up one level
 DEFAULT_DATA_PATH = PROJECT_ROOT / "Capstone_data_20260324.csv"
 
 # Academic thresholds
